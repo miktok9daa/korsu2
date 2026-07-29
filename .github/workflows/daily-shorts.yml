@@ -1,10 +1,6 @@
 name: Daily Auto Shorts with Multi-Platform Upload
 
 on:
-  schedule:
-    - cron: "30 4 * * *"     # 10:00 AM IST  (4:30 UTC)
-    - cron: "30 12 * * *"    # 6:00 PM IST   (12:30 UTC)
-    - cron: "30 20 * * *"    # 2:00 AM IST   (20:30 UTC)
   workflow_dispatch:
 
 jobs:
@@ -65,6 +61,9 @@ jobs:
         python generate_topics.py
 
     - name: Generate daily short video
+      env:
+        GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+        GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
       run: |
         python main.py
 
