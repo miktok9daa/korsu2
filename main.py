@@ -107,7 +107,7 @@ def generate_story_with_pollinations(topic: str) -> str:
     }
 
     print(f"[story] Generating Korean story for topic: {topic} using paid API...")
-    r = requests.post(url, headers=headers, json=payload, timeout=60)
+    r = requests.post(url, headers=headers, json=payload, timeout=180)
     r.raise_for_status()
     
     response_data = r.json()
