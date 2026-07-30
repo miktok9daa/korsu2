@@ -78,51 +78,47 @@ def choose_topic_for_today():
     return selected_topic
 
 def generate_story_with_pollinations(topic: str) -> str:
-    """Generate a short Korean story about ancient women's history using the modern paid Pollinations API."""
     api_key = os.getenv("POLLINATIONS_API_KEY")
     if not api_key:
         raise ValueError("POLLINATIONS_API_KEY environment variable is required for paid API")
-
-    system_prompt = (
-        "당신은 고대 문명의 여성 역사를 전문으로 하는 역사학자입니다. "
-        "30초 분량(80-130 단어)의 짧고 흥미로운 이야기를 한국어로 작성하세요. "
-        "실제 역사적 사실, 법률, 관습 또는 전통을 이야기하세요. "
-        "생동감 있고 매력적인 문체를 사용하세요. 제목을 포함하지 마세요."
+    system = (
+        "Eres un historiador especializado en la historia de las mujeres en las civilizaciones antiguas. "
+        "Escribe una historia corta e interesante de 30 segundos (80-130 palabras) en espanol. "
+        "Cuenta hechos historicos reales, leyes, costumbres o tradiciones. "
+        "Usa un estilo vivo y cautivador. Sin titulos."
     )
-    user_prompt = f"주제: {topic}. 흥미로운 역사적 사실을 이야기해 주세요."
-
-    # Use the OpenAI-compatible chat completions endpoint as per documentation
-    url = "https://gen.pollinations.ai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
+    prompt = f"Tema: {topic}. Cuenta un hecho historico interesante."
+    url = f"https://gen.pollinations.ai/text/{quote(prompt)}"
+    headers = {"Authorization": f"Bearer {api_key}"}
+    params = {
+        "model": "nova-fast",
+        "temperature": 1.0,
+        "system": system,
+        "json": False
     }
-    payload = {
-        "model": "openai",  # High quality text model
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ],
-        "temperature": 0.8
-    }
-
-    print(f"[story] Generating Korean story for topic: {topic} using paid API...")
-    r = requests.post(url, headers=headers, json=payload, timeout=180)
-    r.raise_for_status()
-    
-    response_data = r.json()
-    text = response_data['choices'][0]['message']['content'].strip()
-
-    # Post-process: ensure word count is within limits
-    words = text.split()
-    if len(words) > STORY_MAX_WORDS:
-        text = " ".join(words[:STORY_MAX_WORDS]) + "."
-
-    with open(STORY_FILE, "w", encoding="utf-8") as f:
-        f.write(text)
-
-    print(f"[story] Korean story generated ({len(text.split())} words)")
-    return text
+    print(f"[story] Generating Spanish story for topic: {topic}")
+    last_error = None
+    for attempt in range(3):
+        try:
+            r = requests.get(url, headers=headers, params=params, timeout=180)
+            r.raise_for_status()
+            text = r.text.strip()
+            words = text.split()
+            if len(words) > STORY_MAX_WORDS:
+                text = " ".join(words[:STORY_MAX_WORDS])
+            with open(STORY_FILE, "w", encoding="utf-8") as f:
+                f.write(text)
+            print(f"[story] Spanish story generated ({len(text.split())} words)")
+            return text
+        except Exception as e:
+            last_error = e
+            if attempt < 2:
+                wait = 10 * (attempt + 1)
+                print(f"[story] API attempt {attempt + 1} failed: {e}. Retrying in {wait}s...")
+                import time as _time
+                _time.sleep(wait)
+                continue
+    raise RuntimeError(f"Failed to generate story after 3 attempts: {last_error}")
 
 def generate_scene_descriptions(story: str) -> list:
     """Extract distinct scene descriptions from the story sentences."""
