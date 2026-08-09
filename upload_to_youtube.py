@@ -1,4 +1,4 @@
-"""
+﻿"""
 YouTube Upload Script - Updated for 2025
 
 Uses refresh token from GitHub Secrets to upload videos.
@@ -45,6 +45,15 @@ def get_authenticated_service():
 
 def upload_to_youtube(video_file, title, description, tags, category_id='22'):
     """Upload video to YouTube and return result."""
+    if not title:
+        title = "Shorts"
+    title = title.replace("\n", " ").replace("\r", " ").replace("\t", " ")
+    title = " ".join(title.split())
+    title = title.strip("|-–— ")
+    if len(title) > 100:
+        title = title[:97] + "..."
+    if not title or len(title.strip()) < 2:
+        title = "Shorts"
     youtube = get_authenticated_service()
     
     body = {
@@ -83,7 +92,7 @@ def upload_to_youtube(video_file, title, description, tags, category_id='22'):
         if status:
             print(f"[youtube] Progress: {int(status.progress() * 100)}%")
     
-    print(f"[youtube] ✅ Uploaded! Video ID: {response['id']}")
+    print(f"[youtube] âœ… Uploaded! Video ID: {response['id']}")
     print(f"[youtube] URL: https://youtube.com/shorts/{response['id']}")
     return {'status': 'success', 'id': response['id'], 'platform': 'youtube', 'link': f"https://youtube.com/shorts/{response['id']}"}
 
@@ -92,7 +101,7 @@ def main():
     video_file = Path('output/final_video.mp4')
     
     if not video_file.exists():
-        print("[youtube] ❌ No video found at output/final_video.mp4")
+        print("[youtube] âŒ No video found at output/final_video.mp4")
         return
     
     # Read the story and topic for title
@@ -108,14 +117,14 @@ def main():
         # Create short, catchy title (max 60 chars for mobile)
         title = first_sentence[:57] + "..." if len(first_sentence) > 60 else first_sentence
     else:
-        title = "고대 여성의 역사"
+        title = "ê³ ëŒ€ ì—¬ì„±ì˜ ì—­ì‚¬"
     
     # NO description for Shorts (as requested)
-    description = "#Shorts #여성역사 #고대역사"
+    description = "#Shorts #ì—¬ì„±ì—­ì‚¬ #ê³ ëŒ€ì—­ì‚¬"
     
     tags = [
-        '역사', '고대 여성', '역사적 사실',
-        'Shorts', 'AI', '교육', '고대 세계'
+        'ì—­ì‚¬', 'ê³ ëŒ€ ì—¬ì„±', 'ì—­ì‚¬ì  ì‚¬ì‹¤',
+        'Shorts', 'AI', 'êµìœ¡', 'ê³ ëŒ€ ì„¸ê³„'
     ]
     
     # Upload
@@ -128,7 +137,7 @@ def main():
             category_id='22'
         )
     except Exception as e:
-        print(f"[youtube] ❌ Upload failed: {e}")
+        print(f"[youtube] âŒ Upload failed: {e}")
         raise
 
 if __name__ == '__main__':
