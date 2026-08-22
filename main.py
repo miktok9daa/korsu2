@@ -65,18 +65,40 @@ def choose_topic_for_today():
 
     # Use today's date to get a stable but changing index
     # toordinal() returns an integer representing the day (e.g. 738000)
+    # Pick a topic that has NOT been used yet (history persisted via git commit)
     today = datetime.date.today()
-    index = today.toordinal() % len(all_topics)
-    selected_topic = all_topics[index]
-    
-    print(f"[topics] Date: {today}, Index: {index}/{len(all_topics)}, Selected: {selected_topic}")
-    
-    # Optional: Log to used_topics.txt (though it won't persist in GHA)
-    unused_topics_file = "used_topics.txt"
-    with open(unused_topics_file, "a", encoding="utf-8") as f:
+    used_file = "used_topics.txt"
+    used = set()
+    if os.path.exists(used_file):
+        with open(used_file, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                if ":" in line:
+                    topic = line.split(":", 1)[1].strip()
+                else:
+                    topic = line
+                if topic:
+                    used.add(topic)
+
+    remaining = [t for t in all_topics if t not in used]
+
+    if not remaining:
+        # All topics exhausted -> reset history and recycle
+        print(f"[topics] All {len(all_topics)} topics used. Resetting history.")
+        remaining = list(all_topics)
+        used = set()
+        open(used_file, "w", encoding="utf-8").close()
+
+    selected_topic = random.choice(remaining)
+    print(f"[topics] Date: {today}, Pool: {len(all_topics)}, Used: {len(used)}, Selected: {selected_topic}")
+
+    with open(used_file, "a", encoding="utf-8") as f:
         f.write(f"{today}: {selected_topic}\n")
-    
+
     return selected_topic
+
 
 def generate_story_with_pollinations(topic: str) -> str:
     """Generate story using Pollinations AI."""
