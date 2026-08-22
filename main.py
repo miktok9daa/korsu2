@@ -52,21 +52,15 @@ def ensure_dirs():
         f.unlink()
 
 def choose_topic_for_today():
-    """Choose a unique topic based on the current date to ensure daily variety in GitHub Actions."""
+    """Pick a topic that has NOT been used yet (history persisted via git commit)."""
+    import os, datetime, random
+    TOPICS_FILE = "topics.txt"
     if not os.path.exists(TOPICS_FILE):
-        print(f"[topics] Error: {TOPICS_FILE} not found!")
-        return "Ancient Women's History"
-
+        return "Default Topic"
     with open(TOPICS_FILE, "r", encoding="utf-8") as f:
         all_topics = [line.strip() for line in f if line.strip()]
-    
     if not all_topics:
-        return "Ancient Women's History"
-
-    # Use today's date to get a stable but changing index
-    # toordinal() returns an integer representing the day (e.g. 738000)
-    # Pick a topic that has NOT been used yet (history persisted via git commit)
-    today = datetime.date.today()
+        return "Default Topic"
     used_file = "used_topics.txt"
     used = set()
     if os.path.exists(used_file):
@@ -75,28 +69,18 @@ def choose_topic_for_today():
                 line = line.strip()
                 if not line:
                     continue
-                if ":" in line:
-                    topic = line.split(":", 1)[1].strip()
-                else:
-                    topic = line
+                topic = line.split(":", 1)[1].strip() if ":" in line else line
                 if topic:
                     used.add(topic)
-
     remaining = [t for t in all_topics if t not in used]
-
     if not remaining:
-        # All topics exhausted -> reset history and recycle
-        print(f"[topics] All {len(all_topics)} topics used. Resetting history.")
         remaining = list(all_topics)
         used = set()
         open(used_file, "w", encoding="utf-8").close()
-
     selected_topic = random.choice(remaining)
-    print(f"[topics] Date: {today}, Pool: {len(all_topics)}, Used: {len(used)}, Selected: {selected_topic}")
-
     with open(used_file, "a", encoding="utf-8") as f:
-        f.write(f"{today}: {selected_topic}\n")
-
+        f.write(f"{datetime.date.today()}: {selected_topic}\n")
+    print(f"[topics] Selected: {selected_topic} (pool={len(all_topics)}, used={len(used)})")
     return selected_topic
 
 
