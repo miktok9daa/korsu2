@@ -39,7 +39,7 @@ def generate_new_topics(count=100):
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "openai",
+        "model": "openai/gpt-5.4-nano",
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
